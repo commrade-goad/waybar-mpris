@@ -24,7 +24,7 @@ Here is the example how to implement it on waybar configuration file.
           "max-length": 30,
           "on-click": "playerctl play-pause",
           "on-click-right": "playerctl stop",
-	      "smooth-scrolling-threshold": 10,
+          "smooth-scrolling-threshold": 10,
           "on-scroll-up": "playerctl next",
           "on-scroll-down": "playerctl previous",
           "exec": "[path to script]",
