@@ -1,9 +1,11 @@
 use mpris::{PlaybackStatus, PlayerFinder};
 
 fn connect() -> Result<mpris::Player, ()> {
-    let player = PlayerFinder::new()
-        .expect("Couldn't connect to D-bus!")
-        .find_active();
+    let player = match PlayerFinder::new() {
+        Err(_) => return Err(()),
+        Ok(v) => v,
+    }
+    .find_active();
     if let Ok(player) = player {
         return Ok(player);
     } else {
@@ -13,7 +15,17 @@ fn connect() -> Result<mpris::Player, ()> {
 
 fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
     let mut data: Vec<String> = Vec::new();
-    let metadata = player_name.get_metadata().expect("Cant get the metadata!");
+    let metadata = match player_name.get_metadata() {
+        Err(e) => {
+            // no metadata but there is player
+            println!("Error : {e}");
+            data.push("na".to_string()); // name of player will be `na`
+            data.push("Not available".to_string()); // title will be `Not available`
+            data.push("Not available".to_string()); // artist will be `Not available`
+            return data;
+        }
+        Ok(v) => v,
+    };
     data.push(player_name.bus_name_player_name_part().to_string());
     if let Some(mpris::MetadataValue::String(title)) = metadata.get("xesam:title") {
         data.push(title.to_owned());
@@ -51,10 +63,13 @@ fn get_status(player_name: &mpris::Player) -> PlaybackStatus {
 
 fn main() {
     let arg: Vec<String> = std::env::args().collect();
-    let interval:u64 = arg[0].parse().unwrap_or(1000);
+    let interval: u64 = arg[0].parse().unwrap_or(1000);
     loop {
         let player = connect();
         match player {
+            Err(_) => {
+                println!("\n");
+            }
             Ok(v) => {
                 let metadata = get_metadata(&v);
                 let status = get_status(&v);
@@ -69,7 +84,7 @@ fn main() {
                 let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
                 let mut tooltip = String::new();
                 if tooltip_b.chars().count() > 100 {
-                    tooltip.push_str(&"Too long...".to_string());
+                    tooltip.push_str(&"Too long...");
                 } else {
                     tooltip.push_str(&tooltip_b);
                 }
@@ -78,9 +93,6 @@ fn main() {
                     "{{\"text\":\"{}\", \"tooltip\": \"{}\", \"class\": \"{}\", \"alt\": \"{}\"}}",
                     &text, &tooltip, &class, &metadata[0]
                 );
-            }
-            Err(()) => {
-                println!("\n");
             }
         }
         std::thread::sleep(std::time::Duration::from_millis(interval));
