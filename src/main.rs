@@ -21,7 +21,7 @@ fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
             println!("Error : {e}");
             data.push("na".to_string()); // name of player will be `na`
             data.push("Not available".to_string()); // title will be `Not available`
-            data.push("Not available".to_string()); // artist will be `Not available`
+            data.push("None".to_string()); // artist will be `None`
             return data;
         }
         Ok(v) => v,
@@ -29,6 +29,8 @@ fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
     data.push(player_name.bus_name_player_name_part().to_string());
     if let Some(mpris::MetadataValue::String(title)) = metadata.get("xesam:title") {
         data.push(title.to_owned());
+    } else {
+        data.push("Not available".to_string());
     };
     if let Some(mpris::MetadataValue::Array(artist)) = metadata.get("xesam:artist") {
         if artist.len() > 1 {
@@ -39,11 +41,15 @@ fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
                         0 => data_to_push.push_str(&artist_str.to_string()),
                         _ => data_to_push.push_str(&format!(", {artist_str}")),
                     };
+                } else {
+                    data.push("Not available".to_string());
                 }
             }
         } else {
             if let Some(mpris::MetadataValue::String(artist_str)) = artist.get(0) {
                 data.push(artist_str.to_string());
+            } else {
+                data.push("None".to_string());
             }
         }
     };
@@ -55,10 +61,36 @@ fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
     return data;
 }
 
-fn get_status(player_name: &mpris::Player) -> PlaybackStatus {
-    let player_status: PlaybackStatus = mpris::Player::get_playback_status(&player_name)
-        .expect("Error : Cant get the player status!");
-    return player_status;
+fn get_status(player_name: &mpris::Player) -> Result<PlaybackStatus, ()> {
+    let player_status= mpris::Player::get_playback_status(&player_name);
+    if let Ok(value) = player_status {
+        return Ok(value);
+    } else {
+        return Err(());
+    };
+}
+
+fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
+    let mut icons: String = String::new();
+    match status {
+        PlaybackStatus::Paused => icons.push_str(""),
+        PlaybackStatus::Playing => icons.push_str(""),
+        PlaybackStatus::Stopped => icons.push_str(""),
+    }
+    let text: String = format!("{icons} {} - {}", metadata[2], metadata[1]);
+    let class: String = format!("custom-{}", metadata[0]);
+    let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
+    let mut tooltip = String::new();
+    if tooltip_b.chars().count() > 100 {
+        tooltip.push_str(&"Too long...");
+    } else {
+        tooltip.push_str(&tooltip_b);
+    }
+
+    println!(
+        "{{\"text\":\"{}\", \"tooltip\": \"{}\", \"class\": \"{}\", \"alt\": \"{}\"}}",
+        &text, &tooltip, &class, &metadata[0]
+        );
 }
 
 fn main() {
@@ -73,26 +105,11 @@ fn main() {
             Ok(v) => {
                 let metadata = get_metadata(&v);
                 let status = get_status(&v);
-                let mut icons: String = String::new();
-                match status {
-                    PlaybackStatus::Paused => icons.push_str(""),
-                    PlaybackStatus::Playing => icons.push_str(""),
-                    PlaybackStatus::Stopped => icons.push_str(""),
-                }
-                let text: String = format!("{icons} {} - {}", metadata[2], metadata[1]);
-                let class: String = format!("custom-{}", metadata[0]);
-                let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
-                let mut tooltip = String::new();
-                if tooltip_b.chars().count() > 100 {
-                    tooltip.push_str(&"Too long...");
+                if let Ok(value) = status {
+                    print_json(value, metadata);
                 } else {
-                    tooltip.push_str(&tooltip_b);
+                    println!("\n");
                 }
-
-                println!(
-                    "{{\"text\":\"{}\", \"tooltip\": \"{}\", \"class\": \"{}\", \"alt\": \"{}\"}}",
-                    &text, &tooltip, &class, &metadata[0]
-                );
             }
         }
         std::thread::sleep(std::time::Duration::from_millis(interval));
