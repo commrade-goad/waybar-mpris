@@ -42,7 +42,7 @@ fn get_metadata(player_name: &mpris::Player) -> Vec<String> {
                         _ => data_to_push.push_str(&format!(", {artist_str}")),
                     };
                 } else {
-                    data.push("Not available".to_string());
+                    data.push("None".to_string());
                 }
             }
         } else {
@@ -77,7 +77,7 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         PlaybackStatus::Playing => icons.push_str(""),
         PlaybackStatus::Stopped => icons.push_str(""),
     }
-    let text: String = format!("{icons} {} - {}", metadata[2], metadata[1]);
+    let text: String = format!("{icons} {} - {} ", metadata[2], metadata[1]);
     let class: String = format!("custom-{}", metadata[0]);
     let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
     let mut tooltip = String::new();
