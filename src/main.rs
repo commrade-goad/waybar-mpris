@@ -72,17 +72,27 @@ fn get_status(player_name: &mpris::Player) -> Result<PlaybackStatus, ()> {
 
 fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
     let mut icons: String = String::new();
+    let mut output_1: String = String::new();
+    let mut output_2: String = String::new();
     match status {
         PlaybackStatus::Paused => icons.push_str(""),
         PlaybackStatus::Playing => icons.push_str(""),
         PlaybackStatus::Stopped => icons.push_str(""),
     }
-    let text: String = format!("{icons} {} - {} ", metadata[2], metadata[1]);
+    if metadata[2].chars().count() > 50 { // if the artist name is longer than 50 chars it will it
+                                          // will display the title first
+        output_1.push_str(&metadata[1]);
+        output_2.push_str(&metadata[2]);
+    } else {                              // default => (artist) - (title)
+        output_1.push_str(&metadata[2]);
+        output_2.push_str(&metadata[1]);
+    }
+    let text: String = format!("{icons} {} - {} ", output_1, output_2);
     let class: String = format!("custom-{}", metadata[0]);
     let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
     let mut tooltip = String::new();
-    if tooltip_b.chars().count() > 100 {
-        tooltip.push_str(&"Too long...");
+    if tooltip_b.chars().count() > 75 {
+        tooltip.push_str(&format!("{}", output_2));
     } else {
         tooltip.push_str(&tooltip_b);
     }
