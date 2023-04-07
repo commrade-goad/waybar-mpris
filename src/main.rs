@@ -105,7 +105,7 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
 
 fn main() {
     let arg: Vec<String> = std::env::args().collect();
-    let interval: u64 = arg[0].parse().unwrap_or(1000);
+    let interval: u64 = arg[1].parse().unwrap_or(1000);
     loop {
         let player = connect();
         match player {
@@ -123,5 +123,6 @@ fn main() {
             }
         }
         std::thread::sleep(std::time::Duration::from_millis(interval));
+        println!("sleep : {}ms", interval);
     }
 }
