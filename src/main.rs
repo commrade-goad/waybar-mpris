@@ -79,8 +79,8 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         PlaybackStatus::Playing => icons.push_str(""),
         PlaybackStatus::Stopped => icons.push_str(""),
     }
-    if metadata[2].chars().count() > 50 { // if the artist name is longer than 50 chars it will it
-                                          // will display the title first
+    if metadata[2].chars().count() > 50 || metadata[2] == "None" { // if the artist name is longer than 50 chars or "None" it will it
+                                                                   // will display the title first
         output_1.push_str(&metadata[1]);
         output_2.push_str(&metadata[2]);
     } else {                              // default => (artist) - (title)
@@ -104,7 +104,10 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
 }
 
 fn main() {
-    let arg: Vec<String> = std::env::args().collect();
+    let mut arg: Vec<String> = std::env::args().collect();
+    if arg.len() < 2 {
+        arg.push("1000".to_string());
+    }
     let interval: u64 = arg[1].parse().unwrap_or(1000);
     loop {
         let player = connect();
@@ -123,6 +126,5 @@ fn main() {
             }
         }
         std::thread::sleep(std::time::Duration::from_millis(interval));
-        println!("sleep : {}ms", interval);
     }
 }
