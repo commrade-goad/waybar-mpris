@@ -1,3 +1,5 @@
+use std::process;
+
 use mpris::{PlaybackStatus, PlayerFinder};
 
 fn connect() -> Result<mpris::Player, ()> {
@@ -79,17 +81,21 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         PlaybackStatus::Playing => icons.push_str(""),
         PlaybackStatus::Stopped => icons.push_str(""),
     }
-    if metadata[2].chars().count() > 50 || metadata[2] == "None" { // if the artist name is longer than 50 chars or "None" it will it
-                                                                   // will display the title first
-        output_1.push_str(&metadata[1]);
-        output_2.push_str(&metadata[2]);
+    let mut metadata_filtered: Vec<String> = Vec::new();
+    for arg in 0..metadata.len(){
+        let arg_with_filter = metadata[arg].replace("\"", "\\\"").replace("\'", "\\\'");
+        metadata_filtered.push(format!("{}",arg_with_filter));
+    }
+    if metadata_filtered[2].chars().count() > 50 || metadata_filtered[2] == "None" {
+        output_1.push_str(&metadata_filtered[1]);
+        output_2.push_str(&metadata_filtered[2]);
     } else {                              // default => (artist) - (title)
-        output_1.push_str(&metadata[2]);
-        output_2.push_str(&metadata[1]);
+        output_1.push_str(&metadata_filtered[2]);
+        output_2.push_str(&metadata_filtered[1]);
     }
     let text: String = format!("{icons} {} - {} ", output_1, output_2);
-    let class: String = format!("custom-{}", metadata[0]);
-    let tooltip_b: String = format!("{} by {}", metadata[1], metadata[2]);
+    let class: String = format!("custom-{}", metadata_filtered[0]);
+    let tooltip_b: String = format!("{} by {}", metadata_filtered[1], metadata_filtered[2]);
     let mut tooltip = String::new();
     if tooltip_b.chars().count() > 75 {
         tooltip.push_str(&format!("{}", output_2));
@@ -99,7 +105,7 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
 
     println!(
         "{{\"text\":\"{}\", \"tooltip\": \"{}\", \"class\": \"{}\", \"alt\": \"{}\"}}",
-        &text, &tooltip, &class, &metadata[0]
+        &text, &tooltip, &class, &metadata_filtered[0]
         );
 }
 
