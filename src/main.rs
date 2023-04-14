@@ -1,5 +1,3 @@
-use std::process;
-
 use mpris::{PlaybackStatus, PlayerFinder};
 
 fn connect() -> Result<mpris::Player, ()> {
@@ -83,7 +81,7 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
     }
     let mut metadata_filtered: Vec<String> = Vec::new();
     for arg in 0..metadata.len(){
-        let arg_with_filter = metadata[arg].replace("\"", "\\\"").replace("\'", "\\\'");
+        let arg_with_filter = metadata[arg].replace("\"", "\\\"");
         metadata_filtered.push(format!("{}",arg_with_filter));
     }
     if metadata_filtered[2].chars().count() > 50 || metadata_filtered[2] == "None" {
