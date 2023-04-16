@@ -79,6 +79,10 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         PlaybackStatus::Playing => icons.push_str(""),
         PlaybackStatus::Stopped => icons.push_str(""),
     }
+    if status == PlaybackStatus::Stopped {
+        println!("\n");
+        return
+    }
     let mut metadata_filtered: Vec<String> = Vec::new();
     for arg in 0..metadata.len(){
         let arg_with_filter = metadata[arg].replace("\"", "\\\"");
