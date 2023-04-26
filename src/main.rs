@@ -1,5 +1,17 @@
 use mpris::{PlaybackStatus, PlayerFinder};
 
+struct ProgramOptions {
+    interval: u64,
+    emsg: String,
+}
+
+impl ProgramOptions {
+    fn default_value() -> ProgramOptions{
+        return ProgramOptions {interval: 1000, emsg: "\n".to_string()}
+    }
+}
+
+
 fn connect() -> Result<mpris::Player, ()> {
     let player = match PlayerFinder::new() {
         Err(_) => return Err(()),
@@ -70,7 +82,7 @@ fn get_status(player_name: &mpris::Player) -> Result<PlaybackStatus, ()> {
     };
 }
 
-fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
+fn print_json(status: PlaybackStatus, metadata:Vec<String>, alternatif_message: &String) {
     let mut icons: String = String::new();
     let mut output_1: String = String::new();
     let mut output_2: String = String::new();
@@ -80,7 +92,7 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         PlaybackStatus::Stopped => icons.push_str(""),
     }
     if status == PlaybackStatus::Stopped {
-        println!("\n");
+        alternatif_print(&alternatif_message);
         return
     }
     let mut metadata_filtered: Vec<String> = Vec::new();
@@ -111,28 +123,48 @@ fn print_json(status: PlaybackStatus, metadata:Vec<String>) {
         );
 }
 
-fn main() {
-    let mut arg: Vec<String> = std::env::args().collect();
-    if arg.len() < 2 {
-        arg.push("1000".to_string());
+fn alternatif_print(message: &String) {
+    match &message[..] {
+        "\n" => println!("\n"),
+        _ => { println!(
+                "{{\"text\":\"{}\", \"tooltip\": \"{}\", \"class\": \"no-player\", \"alt\": \"no-player\"}}",
+                &message, &message
+                );
+        }
     }
-    let interval: u64 = arg[1].parse().unwrap_or(1000);
+}
+
+fn get_args() -> ProgramOptions {
+    let args: Vec<String> = std::env::args().collect();
+    let mut return_value: ProgramOptions = ProgramOptions::default_value();
+    for arg in 1..args.len(){
+        match &args[arg][..]{
+            "-i" => return_value.interval = args[arg+1].parse().unwrap_or(1000),
+            "-emsg" => return_value.emsg = args[arg+1].clone(),
+            _ => {}
+        }
+    }
+    return return_value;
+}
+
+fn main() {
+    let args: ProgramOptions = get_args();
     loop {
         let player = connect();
         match player {
             Err(_) => {
-                println!("\n");
+                alternatif_print(&args.emsg);
             }
             Ok(v) => {
                 let metadata = get_metadata(&v);
                 let status = get_status(&v);
                 if let Ok(value) = status {
-                    print_json(value, metadata);
+                    print_json(value, metadata, &args.emsg);
                 } else {
-                    println!("\n");
+                    alternatif_print(&args.emsg);
                 }
             }
         }
-        std::thread::sleep(std::time::Duration::from_millis(interval));
+        std::thread::sleep(std::time::Duration::from_millis(args.interval));
     }
 }
