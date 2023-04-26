@@ -8,14 +8,14 @@ $ cargo build --release
 
 ## Usage
 ```
-waybar-mpris-json [interval in milisecond]
+waybar-mpris-json [-i [interval] / -emsg [alternatif message]]
 ```
-in case if this program/script didn't get any argument it will fallback to default value of 1000 milisecond / 1 second.
+in case if this program/script didn't get argument it will fallback to default value of 1000 milisecond / 1 second and '\n' for the alternatif message.
 
 ## Example
 Here is the example how to implement it on waybar configuration file.
 
-- ~/.config/waybar/config
+-`~/.config/waybar/config`
 ``` json
 "custom/media": {
     	  "format": " {}",
@@ -27,6 +27,6 @@ Here is the example how to implement it on waybar configuration file.
           "smooth-scrolling-threshold": 10,
           "on-scroll-up": "playerctl next",
           "on-scroll-down": "playerctl previous",
-          "exec": "[path to script]",
+          "exec": "/path/to/waybar-mpris-json -i 250 -emsg \"Its quiet now...\"",
      },
 ```
